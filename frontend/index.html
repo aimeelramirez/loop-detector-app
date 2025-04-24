@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loop Detector</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <!-- ✅ MediaPipe JavaScript Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+</head>
+<body class="bg-light d-flex flex-column align-items-center justify-content-center vh-100">
+  <div id="login" class="card p-4 shadow" style="width: 300px;">
+    <h2 class="text-center">Login</h2>
+    <input type="text" class="form-control my-2" id="username" placeholder="Username" />
+    <input type="password" class="form-control my-2" id="password" placeholder="Password" />
+    <button class="btn btn-primary w-100" onclick="login()">Login</button>
+  </div>
+
+  <div id="app" style="display:none;" class="text-center">
+    <video id="video" autoplay width="640" height="480" class="my-3 border" style="position: absolute;"></video>
+    <canvas id="overlay" width="640" height="480" class="border" style="position: relative; z-index: 1;"></canvas>
+    <p id="result" class="fs-4">Waiting...</p>
+  </div>
+
+  <script>
+    let token = '';
+    const API_BASE = 'http://localhost:5000';
+
+    function login() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+
+      fetch(`${API_BASE}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      })
+      .then(async res => {
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Login failed: ${res.status} - ${text}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        token = data.access_token;
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        startVideo();
+      })
+      .catch(err => {
+        alert(err.message);
+      });
+    }
+
+    async function startVideo() {
+      const video = document.getElementById('video');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      setInterval(() => captureAndSend(video), 2000);
+    }
+
+    async function captureAndSend(video) {
+      const canvas = document.getElementById('overlay');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = video.videoWidth;
+      tempCanvas.height = video.videoHeight;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(video, 0, 0);
+
+      const blob = await new Promise(resolve => tempCanvas.toBlob(resolve, 'image/jpeg'));
+      const formData = new FormData();
+      formData.append('frame', blob);
+
+      const response = await fetch(`${API_BASE}/detect`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!data.hands) {
+        document.getElementById('result').innerText = "No hands detected or server error";
+        return;
+      }
+
+      const handCount = data.hands.length;
+      const loopCount = data.loops !== undefined ? data.loops : "unknown";
+
+      document.getElementById('result').innerText = `🙌 Hands: ${handCount} | 🔁 Loops: ${loopCount}`;
+
+      for (const hand of data.hands) {
+        for (const point of hand) {
+          const x = point.x * canvas.width;
+          const y = point.y * canvas.height;
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = "red";
+          ctx.fill();
+        }
+      }
+    }
+  </script>
+</body>
+</html>
