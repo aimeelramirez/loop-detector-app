@@ -4,6 +4,7 @@ from auth import validate_credentials, validate_user, requires_auth_and_whitelis
 import numpy as np
 import cv2
 from detect import process_frame
+import os  # needed to read the PORT environment variable
 
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes and origins
@@ -20,7 +21,8 @@ def login():
     if not validate_credentials(username, password):
         return jsonify({"msg": "Invalid credentials"}), 401
 
-    return jsonify({ "access_token": f"dev-{username}" })
+    return jsonify({"access_token": f"dev-{username}"})
+
 @app.route("/detect", methods=["POST"])
 def detect():
     if 'frame' not in request.files:
@@ -40,4 +42,5 @@ def detect():
     return jsonify(result)
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True) 
+    port = int(os.environ.get("PORT", 5000))  # Render uses PORT env variable
+    app.run(host="0.0.0.0", port=port)
