@@ -1,14 +1,17 @@
 # 🎥 Loop Detector App
 
-This project captures webcam video in the browser, detects loops (e.g., a pink thread) between two hands using computer vision (MediaPipe + OpenCV), and displays the result with a login-protected UI.
+> This project captures webcam video in the browser, detects loops (e.g., a pink thread) between two hands using computer vision (MediaPipe + OpenCV), and displays the result with a login-protected UI.
 ---
 
 ## ✨ Features
 
 - 👁️ Real-time hand detection
 - 🧶 Loop (pink string) detection between hands
-- 🔐 Fake login system (JWT-based) User: admin
-Password: admin
+- 🔐 Fake login system (JWT-based)
+
+# User: **admin**
+# Password: **admin**
+
 - 🌐 Frontend: GitHub Pages or local HTTP server
 - 🧠 Backend: Python Flask API (Heroku or local)
 
