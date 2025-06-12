@@ -1,7 +1,7 @@
 
 # 🎥 Loop Detector App
 
-> This project captures webcam video in the browser, detects loops (e.g., a pink thread) between two hands using computer vision (**MediaPipe + OpenCV**), and displays the result with a **dummy login UI**.
+> This project captures webcam video in the browser, detects loops (e.g., a pink or white thread) between two hands using computer vision (**MediaPipe + OpenCV**), and displays the result with a **dummy login UI**.
 
 ---
 
